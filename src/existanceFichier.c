@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
+
 
 /**
  * @brief fonction qui permet de savoir si le nombre d'arguments est correcte
@@ -32,11 +34,49 @@ void fichier_existe(char * nom_fichier){
     }
 }
 
+/**
+ * @brief fonction qui regarde si le fichier est crypté ou non
+ *
+ * @param nom_fichier nom du fichier que l'on observe
+ */
+void fichier_cripte(FILE * fp){
+
+}
+
+/**
+ * @biref méthode qui permet de vérifier si le fichier est valide
+ *
+ * @param nom_fichier nom de fichier à tester
+ */
+void fichier_valide(char* nom_fichier){
+
+    //ouverture du fichier
+    int fp = open(nom_fichier,O_RDONLY);
+    if (fp == NULL) {
+        perror("Erreur lors de l'ouverture du fichier");
+        exit(-1);
+    }
+    char buf;
+    char buffer[2];
+    int i=0;
+    while(read(fp,&buf,1) && i<2){
+        buffer[i]=buf;
+        i++;
+    }
+    if(buffer[0]=='C' && buffer[1]=='R'){
+        printf("le fichier est crypté");
+    }
+
+    close(fp);
+}
+
 
 int main(int argc, char** argv){
 
+    char* nom_fichier = argv[1];
+
     validation_arguments(argc);
-    fichier_existe(argv[1]);
+    fichier_valide(nom_fichier);
 
     return EXIT_SUCCESS;
 }
