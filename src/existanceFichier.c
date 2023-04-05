@@ -56,16 +56,30 @@ void fichier_valide(char* nom_fichier){
         perror("Erreur lors de l'ouverture du fichier");
         exit(-1);
     }
-    char buf;
+
+    //test fichier crypté
     char buffer[2];
-    int i=0;
-    while(read(fp,&buf,1) && i<2){
-        buffer[i]=buf;
-        i++;
+    if(read(fp,&buffer, 2*sizeof(char)) != -1){
+        if(!(buffer[0]=='C' && buffer[1]=='R')){//si le fichier n'est pas crypté
+            printf("le fichier n'est pas crypté");
+            close(fp);
+            exit(-1);
+        }
     }
-    if(buffer[0]=='C' && buffer[1]=='R'){
-        printf("le fichier est crypté");
+
+    //test valeurs fichier
+    int bufferInt[2];
+    if(read(fp,&bufferInt,2* sizeof(int))){
+        if(!(bufferInt[0]>=0 && bufferInt[0]<=lseek(fp,0,SEEK_END))){
+            perror("la taille du fichier n'est pas correcte");
+            exit(-1);
+        }
+        if(!(bufferInt[1]>0 && bufferInt[1]<lseek(fp,0,SEEK_END))){
+            perror("les valeurs du fichier ne sont pas correctes");
+            exit(-1);
+        }
     }
+
 
     close(fp);
 }
