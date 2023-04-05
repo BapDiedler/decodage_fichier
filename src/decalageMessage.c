@@ -23,26 +23,27 @@ int main(int argc, char** argv){
     int trouve = 1;
     int new_cara;
     while(read(lecture,&buffer, sizeof(char))){
-        new_cara = (buffer-65-atoi(argv[4]))%27;
-        if(new_cara+65=='@'){
-            printf(" ");
-            fflush(stdout);
-            tableau_test[i]= '\0';
-            if(strcmp(tableau_test,mot_test)==0 && trouve==1){
-                trouve=0;
+        if(buffer != '.') {
+            new_cara = (buffer - 65 - atoi(argv[4])) % 27;
+            if (new_cara == -1) {
+                printf(" ");
+                fflush(stdout);
+                tableau_test[i] = '\0';
+                if (strcmp(tableau_test, mot_test) == 0 && trouve == 1) {
+                    trouve = 0;
+                }
+                printf("%c", tableau_test[i]);
+                fflush(stdout);
+                i = -1;
+            } else if (new_cara + 65 >= 'A' && new_cara + 65 <= 'Z') {
+                printf("%c", (char) (new_cara + 65));
+                fflush(stdout);
+                tableau_test[i] = (char) (new_cara + 65);
             }
-            i=-1;
-            printf("%c",tableau_test[i]);
-            fflush(stdout);
-
-        }else if(new_cara+65 >= 'A' && new_cara+65 <= 'Z'){
-            printf("%c", (char)(new_cara+65));
-            fflush(stdout);
-            tableau_test[i] = (char)(new_cara+65);
         }else{
-            printf("%c", buffer);
+            printf(".");
             fflush(stdout);
-            tableau_test[i]= buffer;
+            i=-1;
         }
         i++;
     }

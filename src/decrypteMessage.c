@@ -25,7 +25,12 @@ void validation_arguments(int nb_arguments){
 
 
 /**
- * fonction qui permet de créer un processus
+ * méthode qui gère la création de processus
+ *
+ * @param lecture mode lecture du tube
+ * @param ecriture mode ecriture du tube
+ * @param mot mot à tester
+ * @param decalage décalage dans le code
  */
 void creation_processus(int lecture,int ecriture, char* mot, char* decalage){
     pid_t res;
@@ -46,6 +51,14 @@ void creation_processus(int lecture,int ecriture, char* mot, char* decalage){
     }
 }
 
+
+/**
+ * fonction qui permet l'ouverture du fichier
+ *
+ * @param nom_fichier nom de fichier à ouvrir
+ *
+ * @return descripteur de fichier
+ */
 int ouverture_fichier(char* nom_fichier){
     //ouverture du fichier
     int fp = open(nom_fichier,O_RDONLY);
@@ -56,6 +69,12 @@ int ouverture_fichier(char* nom_fichier){
     return fp;
 }
 
+
+/**
+ * fonction qui regarde si un fichier est crypté
+ *
+ * @param fp fichier que l'on test
+ */
 void test_fichier_crypt(int fp){
     //test fichier crypté
     char buffer[2];
@@ -68,6 +87,14 @@ void test_fichier_crypt(int fp){
     }
 }
 
+
+/**
+ * fonction qui test la validité des données du fichier
+ *
+ * @param fp fichier
+ * @param bufferInt1 taille du fichier
+ * @param bufferInt2 taille du message
+ */
 void test_donnees_fichier(int fp,int* bufferInt1, int* bufferInt2){
     int bufferInt[2];
     //test valeurs fichier
@@ -87,21 +114,35 @@ void test_donnees_fichier(int fp,int* bufferInt1, int* bufferInt2){
     }
 }
 
-void recuperation_donnees_fils(char * decalage, char * nom_fichier){
+
+
+/**
+ * fonction qui récupère les données du programme de décryptage
+ *
+ * @param nom_fichier fichier sur lequel on a travaillé
+ */
+void recuperation_donnees_fils(char * nom_fichier){
     int status;
     wait(&status); // Attendre la fin de l'exécution du processus fils
     fflush(stdout);
     if (WIFEXITED(status)) {
-        if(WEXITSTATUS(status)==atoi(decalage)){
+        if(WEXITSTATUS(status)!=0){
             printf("FICHIER : %s\n",nom_fichier);
-            printf("DECALAGE : %s\n",decalage);
+            printf("DECALAGE : %d\n",WEXITSTATUS(status));
         }
     }
 }
 
 
+/**
+ * méthode qui va lire le contenu du fichier et le copie dans le tube
+ *
+ * @param lecture mode lecture du tube
+ * @param ecriture mode ecriture du tube
+ * @param fp fichier
+ * @param bufferInt buffer sur le descritif du fichier
+ */
 void lecture_message(int lecture, int ecriture, int fp, int* bufferInt){
-
     char cara;
     close(lecture) ;
     //lecture du message
@@ -119,11 +160,13 @@ void lecture_message(int lecture, int ecriture, int fp, int* bufferInt){
 }
 
 
-/**
- * @biref méthode qui permet de vérifier si le fichier est valide et le manipule
- *
- * @param nom_fichier nom de fichier à tester
- */
+ /**
+  * méthode qui permet de vérifier si le fichier est valide et le manipule
+  *
+  * @param nom_fichier nom de fichier
+  * @param mot mot a tester
+  * @param decalage nombre de décalage
+  */
 void fichier_manipulation(char* nom_fichier, char* mot, char* decalage){
     int fp = ouverture_fichier(nom_fichier);
     test_fichier_crypt(fp);
@@ -138,17 +181,24 @@ void fichier_manipulation(char* nom_fichier, char* mot, char* decalage){
     int lecture = tube[0];
     creation_processus(lecture,ecriture,mot,decalage);
     lecture_message(lecture,ecriture,fp,bufferInt);
-    recuperation_donnees_fils(decalage,nom_fichier);
+    recuperation_donnees_fils(nom_fichier);
     close(fp);
 }
 
 
+/**
+ * programme principal
+ *
+ * @param argc nombre d'arguments
+ * @param argv les arguments
+ *
+ * @return 1 si tout c'est bien passé ou -1 en cas d'erreur
+ */
 int main(int argc, char** argv){
 
     validation_arguments(argc);
 
     char* nom_fichier = argv[1];
-
 
     fichier_manipulation(nom_fichier,argv[2],argv[3]);
 
