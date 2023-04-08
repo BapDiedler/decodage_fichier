@@ -190,7 +190,7 @@ void fichier_manipulation(char* nom_fichier, char* mot, char* decalage){
  * programme principal
  *
  * @param argc nombre d'arguments
- * @param argv les arguments
+ * @param argv les arguments argv[1] nom_fichier | argv[2] mot_test | argv[3] décalage
  *
  * @return 1 si tout c'est bien passé ou -1 en cas d'erreur
  */
@@ -200,7 +200,11 @@ int main(int argc, char** argv){
 
     char* nom_fichier = argv[1];
 
-    fichier_manipulation(nom_fichier,argv[2],argv[3]);
+    char decalage[3];
+    for(int i=1; i<26; i++) {
+        sprintf(decalage,"%d",i);
+        fichier_manipulation(nom_fichier, argv[2], decalage);
+    }
 
     return EXIT_SUCCESS;
 }
