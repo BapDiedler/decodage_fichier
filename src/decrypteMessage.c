@@ -142,21 +142,23 @@ void recuperation_donnees_fils(char * nom_fichier){
  * @param fp fichier
  * @param bufferInt buffer sur le descritif du fichier
  */
-void lecture_message(int lecture, int ecriture, int fp, int* bufferInt){
+void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
     char cara;
-    close(lecture) ;
     //lecture du message
     lseek(fp, (__off_t) (bufferInt[1] + 2 * sizeof(int) + 2 * sizeof(char)), SEEK_SET);
     for(int i=0;  i < bufferInt[0]; i++){
+        for(int i=0; i<25; i++) {
+            close(lecture[i]);
+        }
         if(!read(fp,&cara, sizeof(char))){
             perror("erreur dans la lecture du fichier");
             exit(-1);
         }
-        /* écriture (buffer est une suite d'un ou plusieurs octets ici de taille char)*/
-        write(ecriture,&cara, sizeof(char)) ;
+        for(int j=0; j<25; j++) {
+            /* écriture (buffer est une suite d'un ou plusieurs octets ici de taille char)*/
+            write(ecriture[j], &cara, sizeof(char));
+        }
     }
-    /* fin écriture */
-    close(ecriture) ;
 }
 
 
@@ -165,21 +167,30 @@ void lecture_message(int lecture, int ecriture, int fp, int* bufferInt){
   *
   * @param nom_fichier nom de fichier
   * @param mot mot a tester
-  * @param decalage nombre de décalage
   */
-void fichier_manipulation(char* nom_fichier, char* mot, char* decalage){
+void fichier_manipulation(char* nom_fichier, char* mot){
+     char decalage[3];
     int fp = ouverture_fichier(nom_fichier);
     test_fichier_crypt(fp);
     int bufferInt[2];
+     int ecriture[25];
+     int lecture[25];
     test_donnees_fichier(fp,&bufferInt[0],&bufferInt[1]);
-    int tube[2];
-    if (pipe(tube) == -1){ /*création d'un tube*/
-        perror("création impossible du tube");fflush(stdout);
-        exit(1);
+    int tube[25][2];
+    for(int i=0; i<25; i++) {
+        if (pipe(tube[i]) == -1) { /*création d'un tube*/
+            perror("création impossible du tube");
+            fflush(stdout);
+            exit(1);
+        }
+        ecriture[i] = tube[i][1];
+        lecture[i] = tube[i][0];
     }
-    int ecriture = tube[1];
-    int lecture = tube[0];
-    creation_processus(lecture,ecriture,mot,decalage);
+    for(int i=0; i<25; i++){
+        sprintf(decalage,"%d",i);
+        creation_processus(lecture[i],ecriture[i],mot,decalage);
+    }
+
     lecture_message(lecture,ecriture,fp,bufferInt);
     recuperation_donnees_fils(nom_fichier);
     close(fp);
@@ -200,11 +211,7 @@ int main(int argc, char** argv){
 
     char* nom_fichier = argv[1];
 
-    char decalage[3];
-    for(int i=1; i<26; i++) {
-        sprintf(decalage,"%d",i);
-        fichier_manipulation(nom_fichier, argv[2], decalage);
-    }
+    fichier_manipulation(nom_fichier, argv[2]);
 
     return EXIT_SUCCESS;
 }
