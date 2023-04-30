@@ -79,7 +79,7 @@ int afficherMessage(int lecture, int ecriture, int decalage, char* mot_test){
         }
         i++;
         posMessage++;
-    } while (val != 0 && val != -1);
+    } while (val != 0 && val != -1 && trouve==1);
     if(trouve==0) {
         message[posMessage - 1] = '\0';
         printf("%s\n",message);

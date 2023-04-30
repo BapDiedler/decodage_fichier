@@ -162,6 +162,7 @@ void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
     for (int j = 0; j < 25; j++) {
         close(ecriture[j]);
     }
+    free(message);
 }
 
 
