@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/wait.h>
+#include <string.h>
 
 
 /**
@@ -16,10 +17,10 @@
  * @param nb_arguments nombre d'arguments dans le main
  */
 void validation_arguments(int nb_arguments){
-    //le nombre d'arguments doit être de 1
+    //le nombre d'arguments doit être de 2
     if(nb_arguments != 4){
-        perror("le nombre d'arguments doit être de 1");
-        exit(-1);
+        perror("le nombre d'arguments doit être de 2");
+        exit(1);
     }
 }
 
@@ -64,7 +65,7 @@ int ouverture_fichier(char* nom_fichier){
     int fp = open(nom_fichier,O_RDONLY);
     if (fp == -1) {
         perror("Erreur lors de l'ouverture du fichier");
-        exit(-1);
+        exit(1);
     }
     return fp;
 }
@@ -82,7 +83,7 @@ void test_fichier_crypt(int fp){
         if(!(buffer[0]=='C' && buffer[1]=='R')){//si le fichier n'est pas crypté
             printf("le fichier n'est pas crypté");
             close(fp);
-            exit(-1);
+            exit(1);
         }
     }
 }
@@ -101,13 +102,13 @@ void test_donnees_fichier(int fp,int* bufferInt1, int* bufferInt2){
     if(read(fp,&bufferInt,2* sizeof(int))){
         if(!(bufferInt[0]>=0 && bufferInt[0] < lseek(fp, 0, SEEK_END))){
             perror("la taille du fichier n'est pas correcte");
-            exit(-1);
+            exit(1);
         }else{
             *bufferInt1 = bufferInt[0];
         }
         if(!(bufferInt[1]>=0 && bufferInt[1] < lseek(fp, 0, SEEK_END) && bufferInt[0] > bufferInt[1])){
             perror("les valeurs du fichier ne sont pas correctes");
-            exit(-1);
+            exit(1);
         }else{
             *bufferInt2 = bufferInt[1];
         }
@@ -121,16 +122,21 @@ void test_donnees_fichier(int fp,int* bufferInt1, int* bufferInt2){
  *
  * @param nom_fichier fichier sur lequel on a travaillé
  */
-void recuperation_donnees_fils(char * nom_fichier){
+int recuperation_donnees_fils(char * nom_fichier){
     int status;
-    wait(&status); // Attendre la fin de l'exécution du processus fils
-    fflush(stdout);
-    if (WIFEXITED(status)) {
-        if(WEXITSTATUS(status)!=0){
-            printf("FICHIER : %s\n",nom_fichier);
-            printf("DECALAGE : %d\n",WEXITSTATUS(status));
+    int trouve = 1;
+    for(int i=0; i<25; i++) {
+        wait(&status); // Attendre la fin de l'exécution du processus fils
+        fflush(stdout);
+        if (WIFEXITED(status)) {
+            if (WEXITSTATUS(status) != 1) {
+                printf("FICHIER : %s\n", nom_fichier);
+                printf("DECALAGE : %d\n", WEXITSTATUS(status));
+                trouve = 0;
+            }
         }
     }
+    return trouve;
 }
 
 
@@ -144,21 +150,27 @@ void recuperation_donnees_fils(char * nom_fichier){
  */
 void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
     char cara;
+    char* message = malloc(sizeof(char)*bufferInt[0]+1);
     //lecture du message
     lseek(fp, (__off_t) (bufferInt[1] + 2 * sizeof(int) + 2 * sizeof(char)), SEEK_SET);
     for(int i=0;  i < bufferInt[0]; i++){
-        for(int i=0; i<25; i++) {
-            close(lecture[i]);
-        }
         if(!read(fp,&cara, sizeof(char))){
             perror("erreur dans la lecture du fichier");
-            exit(-1);
+            exit(1);
         }
-        for(int j=0; j<25; j++) {
-            /* écriture (buffer est une suite d'un ou plusieurs octets ici de taille char)*/
-            write(ecriture[j], &cara, sizeof(char));
-        }
+        message[i]=cara;
+
     }
+    message[bufferInt[0]+1] = '\0';
+
+    for(int j=0; j<25; j++) {
+        close(lecture[j]);
+        /* écriture (buffer est une suite d'un ou plusieurs octets ici de taille char)*/
+        write(ecriture[j], message, strlen(message));
+
+        close(ecriture[j]);
+    }
+
 }
 
 
@@ -168,7 +180,7 @@ void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
   * @param nom_fichier nom de fichier
   * @param mot mot a tester
   */
-void fichier_manipulation(char* nom_fichier, char* mot){
+int fichier_manipulation(char* nom_fichier, char* mot){
      char decalage[3];
     int fp = ouverture_fichier(nom_fichier);
     test_fichier_crypt(fp);
@@ -192,8 +204,9 @@ void fichier_manipulation(char* nom_fichier, char* mot){
     }
 
     lecture_message(lecture,ecriture,fp,bufferInt);
-    recuperation_donnees_fils(nom_fichier);
+    int trouve = recuperation_donnees_fils(nom_fichier);
     close(fp);
+    return trouve;
 }
 
 
@@ -207,11 +220,11 @@ void fichier_manipulation(char* nom_fichier, char* mot){
  */
 int main(int argc, char** argv){
 
-    validation_arguments(argc);
+    //validation_arguments(argc);
 
     char* nom_fichier = argv[1];
 
-    fichier_manipulation(nom_fichier, argv[2]);
+    int trouve = fichier_manipulation(nom_fichier, argv[2]);
 
-    return EXIT_SUCCESS;
+    return trouve;
 }
