@@ -32,17 +32,20 @@ int main(int argc, char** argv){
         exit(1);
     }
     int trouve;
+    char* mot = argv[2];
+    char* fichier;
     // Parcourt le répertoire
     while ((ent = readdir(dir)) != NULL) {
         if(ent->d_type != DT_DIR) {
             pid_t res;
+            fichier = strcat(argv[1],ent->d_name);
             //création d'un processus
             switch (res = fork()) {
                 case (pid_t) -1 ://erreur dans la création de processus
                     perror("erreur dans la créatiob de processus");
                     exit(1);
                 case (pid_t) 0 ://programme fils
-                    execl("./decrypteMessage", "decrypteMessage", strcat(argv[1],ent->d_name), "DIEDLER", NULL);
+                    execl("./decrypteMessage","decrypteMessage",fichier,mot,NULL);
                     fflush(stdout);
                     break;
                 default ://programme père

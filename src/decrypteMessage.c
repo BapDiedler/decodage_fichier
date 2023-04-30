@@ -12,20 +12,6 @@
 
 
 /**
- * @brief fonction qui permet de savoir si le nombre d'arguments est correcte
- *
- * @param nb_arguments nombre d'arguments dans le main
- */
-void validation_arguments(int nb_arguments){
-    //le nombre d'arguments doit être de 2
-    if(nb_arguments != 4){
-        perror("le nombre d'arguments doit être de 2");
-        exit(1);
-    }
-}
-
-
-/**
  * méthode qui gère la création de processus
  *
  * @param lecture mode lecture du tube
@@ -150,7 +136,7 @@ int recuperation_donnees_fils(char * nom_fichier){
  */
 void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
     char cara;
-    char* message = malloc(sizeof(char)*bufferInt[0]+1);
+    char* message = malloc(sizeof(char)*(bufferInt[0]+1));
     //lecture du message
     lseek(fp, (__off_t) (bufferInt[1] + 2 * sizeof(int) + 2 * sizeof(char)), SEEK_SET);
     for(int i=0;  i < bufferInt[0]; i++){
@@ -161,52 +147,21 @@ void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
         message[i]=cara;
 
     }
-    message[bufferInt[0]+1] = '\0';
+    message[bufferInt[0]]='+';
 
-    for(int j=0; j<25; j++) {
+    for (int j = 0; j < 25; j++) {
         close(lecture[j]);
-        /* écriture (buffer est une suite d'un ou plusieurs octets ici de taille char)*/
-        write(ecriture[j], message, strlen(message));
+    }
 
+    for(int i=0; i< strlen(message); i++) {
+        for (int j = 0; j < 25; j++) {
+            /* écriture (buffer est une suite d'un ou plusieurs octets ici de taille char)*/
+            write(ecriture[j], &message[i], sizeof(message[i]));
+        }
+    }
+    for (int j = 0; j < 25; j++) {
         close(ecriture[j]);
     }
-
-}
-
-
- /**
-  * méthode qui permet de vérifier si le fichier est valide et le manipule
-  *
-  * @param nom_fichier nom de fichier
-  * @param mot mot a tester
-  */
-int fichier_manipulation(char* nom_fichier, char* mot){
-     char decalage[3];
-    int fp = ouverture_fichier(nom_fichier);
-    test_fichier_crypt(fp);
-    int bufferInt[2];
-     int ecriture[25];
-     int lecture[25];
-    test_donnees_fichier(fp,&bufferInt[0],&bufferInt[1]);
-    int tube[25][2];
-    for(int i=0; i<25; i++) {
-        if (pipe(tube[i]) == -1) { /*création d'un tube*/
-            perror("création impossible du tube");
-            fflush(stdout);
-            exit(1);
-        }
-        ecriture[i] = tube[i][1];
-        lecture[i] = tube[i][0];
-    }
-    for(int i=0; i<25; i++){
-        sprintf(decalage,"%d",i);
-        creation_processus(lecture[i],ecriture[i],mot,decalage);
-    }
-
-    lecture_message(lecture,ecriture,fp,bufferInt);
-    int trouve = recuperation_donnees_fils(nom_fichier);
-    close(fp);
-    return trouve;
 }
 
 
@@ -220,11 +175,48 @@ int fichier_manipulation(char* nom_fichier, char* mot){
  */
 int main(int argc, char** argv){
 
-    //validation_arguments(argc);
+    //le nombre d'arguments doit être de 2
+    if(argc != 3){
+        perror("le nombre d'arguments doit être de 2");
+        exit(1);
+    }
 
     char* nom_fichier = argv[1];
+    char* mot = argv[2];
+    char decalage[3];//décalage du décryptage
+    int bufferInt[2];
+    int ecriture[25];//déscripteur d'écriture des tubes
+    int lecture[25];//déscripteur de lecture des tubes
+    int tube[25][2];//déscripteurs des tubes
 
-    int trouve = fichier_manipulation(nom_fichier, argv[2]);
+    int fp = ouverture_fichier(nom_fichier);//ouverture du fichier à manipuler
+
+    test_fichier_crypt(fp);//vérification pour voir si le fichier est crypté
+
+    test_donnees_fichier(fp,&bufferInt[0],&bufferInt[1]);//vérification des données du fichier
+
+    //initialisation des tubes
+    for(int i=0; i<25; i++) {
+        if (pipe(tube[i]) == -1) { /*création d'un tube*/
+            perror("création impossible du tube");
+            fflush(stdout);
+            exit(1);
+        }
+        ecriture[i] = tube[i][1];
+        lecture[i] = tube[i][0];
+    }
+
+    // création des processus
+    for(int i=0; i<25; i++){
+        sprintf(decalage,"%d",i);
+        creation_processus(lecture[i],ecriture[i],mot,decalage);
+    }
+
+    lecture_message(lecture,ecriture,fp,bufferInt);//lecture des messages cryptés
+
+    int trouve = recuperation_donnees_fils(nom_fichier);//récupération des données des processus fils
+
+    close(fp);
 
     return trouve;
 }
