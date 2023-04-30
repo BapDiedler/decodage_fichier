@@ -86,7 +86,7 @@ int main(int argc, char** argv){
 
 //autre
 int afficherMessage(int lecture, int decalage, char* mot_test){
-    printf("MESSAGE (%d): %d\n",getpid(),decalage);
+    //printf("MESSAGE (%d): %d\n",getpid(),decalage);
 
 
     char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
@@ -95,13 +95,14 @@ int afficherMessage(int lecture, int decalage, char* mot_test){
     char buffer[100];
     int i=0;
     int trouve = 1;
-    char* message = calloc(sizeof(char),100);
+    char* message = calloc(sizeof(char),150);
     int posMessage=0;
     int cpt=0;
     int nbOctets = read(lecture,&buffer, 100*sizeof(char));
-    while(cpt!= strlen(buffer) && buffer[cpt]!=0) {
+    while(cpt != strlen(buffer)) {
         if(nbOctets==0){
             close(lecture);
+            break;
         }
         // Chercher l'index du caractère dans l'alphabet
         int index = -1;
@@ -112,13 +113,15 @@ int afficherMessage(int lecture, int decalage, char* mot_test){
                     break;
                 }
             }
+        }else{
+            posMessage++;
         }
 
         // Si le caractère est dans l'alphabet, le déchiffrer
         if (index != -1) {
             index = (index - decalage + 27) % 27;
-            message[i] = alphabet[index];
-            if (index == 26 ) {
+            message[cpt] = alphabet[index];
+            if (index == 26) {
                 tableau_test[i] = '\0';
                 if (strcmp(tableau_test, mot_test) == 0) {
                     trouve = 0;
@@ -127,13 +130,17 @@ int afficherMessage(int lecture, int decalage, char* mot_test){
             } else {
                 tableau_test[i] = alphabet[index];
             }
+            if(decalage==17)
+                printf("-%c",buffer[cpt]);
+            posMessage++;
         }
         cpt++;
         i++;
     }
+    printf("%d",cpt);
 
+    message[cpt]='\0';
 
-    message[posMessage]='\0';
     return trouve;
 }
 
@@ -154,6 +161,6 @@ int main(int argc, char** argv){
     if(trouve==1){
         return 1;
     }
-    printf("le mot est trouvé\n");
+    //printf("le mot est trouvé\n");
     return atoi(argv[4]);
 }

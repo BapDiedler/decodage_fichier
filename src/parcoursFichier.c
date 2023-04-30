@@ -12,6 +12,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <string.h>
 
 
 int main(int argc, char** argv){
@@ -33,31 +34,32 @@ int main(int argc, char** argv){
     int trouve;
     // Parcourt le répertoire
     while ((ent = readdir(dir)) != NULL) {
-
-        pid_t res;
-        //création d'un processus
-        switch ( res = fork() ){
-            case (pid_t) -1 ://erreur dans la création de processus
-                perror("erreur dans la créatiob de processus");
-                exit(1);
-            case (pid_t) 0 ://programme fils
-                execl("./decrypteMessage","decrypteMessage",ent->d_name,"DIEDLER");
-                fflush(stdout);
-                break;
-            default ://programme père
-                break;
-        }
-
-        wait(&status); // Attendre la fin de l'exécution du processus fils
-        fflush(stdout);
-        if (WIFEXITED(status)) {
-            if (WEXITSTATUS(status) == 0) {
-                trouve = 1;
+        if(ent->d_type != DT_DIR) {
+            pid_t res;
+            //création d'un processus
+            switch (res = fork()) {
+                case (pid_t) -1 ://erreur dans la création de processus
+                    perror("erreur dans la créatiob de processus");
+                    exit(1);
+                case (pid_t) 0 ://programme fils
+                    execl("./decrypteMessage", "decrypteMessage", strcat(argv[1],ent->d_name), "DIEDLER", NULL);
+                    fflush(stdout);
+                    break;
+                default ://programme père
+                    break;
             }
-        }
 
-        // Affiche le nom de chaque fichier
-        printf("%s\n", ent->d_name);
+            wait(&status); // Attendre la fin de l'exécution du processus fils
+            fflush(stdout);
+            if (WIFEXITED(status)) {
+                if (WEXITSTATUS(status) == 0) {
+                    trouve = 1;
+                }
+            }
+
+            // Affiche le nom de chaque fichier
+            //printf("%s\n", ent->d_name);
+        }
     }
 
     if(trouve != 1){
