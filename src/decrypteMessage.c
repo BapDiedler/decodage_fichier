@@ -113,11 +113,12 @@ int recuperation_donnees_fils(char * nom_fichier){
     int trouve = 1;
     for(int i=0; i<25; i++) {
         wait(&status); // Attendre la fin de l'exécution du processus fils
-        fflush(stdout);
         if (WIFEXITED(status)) {
             if (WEXITSTATUS(status) != 1) {
                 printf("FICHIER : %s\n", nom_fichier);
+                fflush(stdout);
                 printf("DECALAGE : %d\n", WEXITSTATUS(status));
+                fflush(stdout);
                 trouve = 0;
             }
         }
@@ -139,25 +140,27 @@ void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
     char* message = malloc(sizeof(char)*(bufferInt[0]+1));
     //lecture du message
     lseek(fp, (__off_t) (bufferInt[1] + 2 * sizeof(int) + 2 * sizeof(char)), SEEK_SET);
-    for(int i=0;  i < bufferInt[0]; i++){
-        if(!read(fp,&cara, sizeof(char))){
-            perror("erreur dans la lecture du fichier");
-            exit(1);
-        }
-        message[i]=cara;
 
-    }
-    message[bufferInt[0]]='+';
-
+    //fermeture du descripteur de lecture
     for (int j = 0; j < 25; j++) {
         close(lecture[j]);
     }
 
-    for(int i=0; i< strlen(message); i++) {
+    for(int i=0;  i < bufferInt[0]+1; i++){
+        if(i!=bufferInt[0]) {
+            if (!read(fp, &cara, sizeof(char))) {
+                perror("erreur dans la lecture du fichier");
+                exit(1);
+            }
+            message[i] = cara;
+        }else{
+            message[i] = '+';
+        }
         for (int j = 0; j < 25; j++) {
             /* écriture (buffer est une suite d'un ou plusieurs octets ici de taille char)*/
             write(ecriture[j], &message[i], sizeof(message[i]));
         }
+
     }
     for (int j = 0; j < 25; j++) {
         close(ecriture[j]);

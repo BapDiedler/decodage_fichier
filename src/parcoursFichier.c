@@ -12,17 +12,26 @@
 #include <sys/wait.h>
 #include <string.h>
 
-int lectureDonnees(){
+/**
+ * fonction qui permet de récupérer les données de retour de chaque processus
+ *
+ * @param nbFichiers nombre de fichiers présents
+ * @return 1 si aucun fichier n'as trouvé le mot 0 sinon
+ */
+int lectureDonnees(int nbFichiers){
     // Attendre la fin de l'exécution du processus fils
+    int trouve = 1;
     int status;
-    wait(&status);
-    fflush(stdout);
-    if (WIFEXITED(status)) {
-        if (WEXITSTATUS(status) == 0) {
-            return 1;
+    for(int i=0; i<nbFichiers; i++) {
+        wait(&status);
+        fflush(stdout);
+        if (WIFEXITED(status)) {
+            if (WEXITSTATUS(status) == 0) {
+                trouve = 0;
+            }
         }
     }
-    return 0;
+    return trouve;
 }
 
 /*MAIN PROGRAMME*/
@@ -36,6 +45,7 @@ int main(int argc, char** argv){
 
     struct dirent * ent;
     char* fichier;
+    int nbFichiers=0;
 
     // Ouvre le répertoire courant
     DIR* dir = opendir(argv[1]);
@@ -47,6 +57,7 @@ int main(int argc, char** argv){
     // Parcourt le répertoire
     while ((ent = readdir(dir)) != NULL) {
         if(ent->d_type != DT_DIR) {
+            nbFichiers++;
             pid_t res;
             fichier = strdup(argv[1]);
             strcat(fichier,ent->d_name);
@@ -63,13 +74,11 @@ int main(int argc, char** argv){
                     break;
             }
             free(fichier);//libération mémoire du strdup
-
-
         }
     }
 
     //on vérifie si le mot a été trouvé
-    if(lectureDonnees() != 1){
+    if(lectureDonnees(nbFichiers) == 1){
         perror("le programme est à sa fin mais aucun fichier ne correspond au mot cherché");
     }
 
