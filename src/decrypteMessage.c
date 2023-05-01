@@ -67,7 +67,7 @@ void test_fichier_crypt(int fp){
     char buffer[2];
     if(read(fp,&buffer, 2*sizeof(char))){
         if(!(buffer[0]=='C' && buffer[1]=='R')){//si le fichier n'est pas crypté
-            printf("le fichier n'est pas crypté");
+            perror("le fichier n'est pas crypté");
             close(fp);
             exit(1);
         }
@@ -140,11 +140,6 @@ void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
     char* message = malloc(sizeof(char)*(bufferInt[0]+1));
     //lecture du message
     lseek(fp, (__off_t) (bufferInt[1] + 2 * sizeof(int) + 2 * sizeof(char)), SEEK_SET);
-
-    //fermeture du descripteur de lecture
-    for (int j = 0; j < 25; j++) {
-        close(lecture[j]);
-    }
 
     for(int i=0;  i < bufferInt[0]+1; i++){
         if(i!=bufferInt[0]) {

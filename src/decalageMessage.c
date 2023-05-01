@@ -46,7 +46,6 @@ int decryptMessage(int lecture, int decalage, char* mot_test){
     int val;
 
     do{
-        buffer='_';
         val = read(lecture,&buffer, sizeof(char));
         if(decalage != 0 && buffer != '+') {
             // Chercher l'index du caractère dans l'alphabet

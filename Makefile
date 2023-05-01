@@ -1,6 +1,7 @@
 CC=gcc
+ARG=DIEDLER
 
-all: decalageMessage decrypteMessage parcoursFichier
+all: run
 
 decalageMessage: src/decalageMessage.c
 	$(CC) src/decalageMessage.c -o decalageMessage
@@ -11,7 +12,7 @@ decrypteMessage: src/decrypteMessage.c
 parcoursFichier: src/parcoursFichier.c
 	$(CC) src/parcoursFichier.c -o parcoursFichier
 
-.PHONY: clean
+.PHONY: clean run
 
 clean:
 	rm -f decalageMessage decrypteMessage parcoursFichier
