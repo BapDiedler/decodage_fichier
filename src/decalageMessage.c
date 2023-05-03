@@ -139,8 +139,6 @@ int main(int argc, char** argv){
 
     close(lecture);
 
-    sleep(1);
-
     if(trouve==1){
         return 1;
     }

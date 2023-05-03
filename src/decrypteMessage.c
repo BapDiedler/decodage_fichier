@@ -11,6 +11,8 @@
 #include <string.h>
 
 
+#define NBPROCESS 25
+
 /**
  * méthode qui gère la création de processus
  *
@@ -19,7 +21,7 @@
  * @param mot mot à tester
  * @param decalage décalage dans le code
  */
-void creation_processus(int lecture, int ecriture, char* mot, char* decalage){
+void creation_processus(int lecture, int ecriture, char* mot, char* decalage, int* ecritures){
     pid_t res;
     char valLecture[5], valEcriture[5];
     sprintf(valEcriture,"%d",ecriture);
@@ -30,8 +32,10 @@ void creation_processus(int lecture, int ecriture, char* mot, char* decalage){
             perror("erreur dans la créatiob de processus");
             exit(1);
         case (pid_t) 0 ://programme fils
+            for(int i = 0 ; i < NBPROCESS ; i += 1) {
+                close(ecritures[i]);
+            }
             execl("./decalageMessage","decalageMessage",valLecture,valEcriture,mot,decalage,NULL);
-            fflush(stdout);
             break;
         default ://programme père
             break;
@@ -119,7 +123,7 @@ void test_donnees_fichier(int fp,int* bufferInt1, int* bufferInt2){
 int recuperation_donnees_fils(char * nom_fichier){
     int status;
     int trouve = 1;
-    for(int i=0; i<25; i++) {
+    for(int i=0; i<NBPROCESS; i++) {
         wait(&status); // Attendre la fin de l'exécution du processus fils
         if (WIFEXITED(status)) {
             if (WEXITSTATUS(status) != 1) {
@@ -148,8 +152,8 @@ void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
     ssize_t val;
 
     //fermeture de la lecture
-    for (int j = 0; j < 25; j++) {
-        close(lecture[j]);
+    for (int j = 0; j < NBPROCESS; j++) {
+        //close(lecture[j]);
     }
 
     //déplacement de curseur dans le fichier
@@ -157,24 +161,20 @@ void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
 
     //lecture du message
     for(int i=0;  i < bufferInt[0]+1; i++){
-        if(i!=bufferInt[0]) {
-            val = read(fp, &buffer, sizeof(char));
-            if (val==-1) {
-                printf("erreur dans la lecture du fichier: %zd\n",val);
-                fflush(stdout);
-                exit(1);
-            }
-        }else{
-            buffer = 'A';
+        val = read(fp, &buffer, sizeof(char));
+        if (val==-1) {
+            printf("erreur dans la lecture du fichier: %zd\n",val);
+            fflush(stdout);
+            exit(1);
         }
-        for (int j = 0; j < 25; j++) {
+        for (int j = 0; j < NBPROCESS; j++) {
             /* écriture (buffer est une suite d'un ou plusieurs octets ici de taille char)*/
             write(ecriture[j], &buffer, sizeof(buffer));
         }
     }
 
     //fermeture des tubes d'écriture
-    for (int j = 0; j < 25; j++) {
+    for (int j = 0; j < NBPROCESS; j++) {
         close(ecriture[j]);
     }
 }
@@ -201,9 +201,9 @@ int main(int argc, char** argv){
     char* mot = argv[2];
     char decalage[3];//décalage du décryptage
     int bufferInt[2];
-    int ecriture[25];//déscripteur d'écriture des tubes
-    int lecture[25];//déscripteur de lecture des tubes
-    int tube[25][2];//déscripteurs des tubes
+    int ecriture[NBPROCESS];//déscripteur d'écriture des tubes
+    int lecture[NBPROCESS];//déscripteur de lecture des tubes
+    int tube[NBPROCESS][2];//déscripteurs des tubes
 
     int fp = ouverture_fichier(nom_fichier);//ouverture du fichier à manipuler
 
@@ -212,7 +212,7 @@ int main(int argc, char** argv){
     test_donnees_fichier(fp,&bufferInt[0],&bufferInt[1]);//vérification des données du fichier
 
     //initialisation des tubes
-    for(int i=0; i<25; i++) {
+    for(int i=0; i<NBPROCESS; i++) {
         if (pipe(tube[i]) == -1) { /*création d'un tube*/
             perror("création impossible du tube");
             fflush(stdout);
@@ -223,9 +223,9 @@ int main(int argc, char** argv){
     }
 
     // création des processus
-    for(int i=0; i<25; i++){
+    for(int i=0; i<NBPROCESS; i++){
         sprintf(decalage,"%d",i);
-        creation_processus(lecture[i],ecriture[i],mot,decalage);
+        creation_processus(lecture[i],ecriture[i],mot,decalage, ecriture);
     }
 
     lecture_message(lecture,ecriture,fp,bufferInt);//lecture des messages cryptés
