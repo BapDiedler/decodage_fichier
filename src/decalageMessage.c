@@ -17,9 +17,9 @@ int chercheIndex(char buffer){
     char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
     char* valIndex;
     int index = -1;
-    if(buffer != '.' && buffer != ',') {
+    if(buffer != '.' && buffer != ',') {//ces caractères ne changent pas
         valIndex = strchr(alphabet,buffer);
-        if(valIndex != NULL){
+        if(valIndex != NULL){//si le caractère est dans notre alphabet
             index = valIndex - alphabet;
         }
     }
@@ -36,6 +36,7 @@ int chercheIndex(char buffer){
  */
 int decryptMessage(int lecture, int decalage, char* mot_test){
 
+    //déclaration des variables
     char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
     char message[150];
     char tableau_test[150];
@@ -45,7 +46,8 @@ int decryptMessage(int lecture, int decalage, char* mot_test){
     int posMessage=0;
     int val;
 
-    do{
+    //lecture des valeurs du tubes avec décalage des valeurs
+    /**do{
         val = read(lecture,&buffer, sizeof(char));
         if(decalage != 0 && buffer != '+') {
             // Chercher l'index du caractère dans l'alphabet
@@ -76,7 +78,37 @@ int decryptMessage(int lecture, int decalage, char* mot_test){
         }
         i++;
         posMessage++;
-    } while (val != 0 && val != -1);
+    } while (val != 0 && val != -1);*/
+
+
+    while(read(lecture,&buffer, sizeof(char)) != 0){
+        if(decalage != 0) {
+            // Chercher l'index du caractère dans l'alphabet
+            int index = chercheIndex(buffer);
+
+            // Si le caractère est dans l'alphabet, le déchiffrer
+            if (index != -1) {
+                index = (index - decalage + 27) % 27;
+                message[posMessage] = alphabet[index];
+                if (index == 26) {
+                    tableau_test[i] = '\0';
+                    //on regarde si le mot est trouvé
+                    if (strcmp(tableau_test, mot_test) == 0) {
+                        trouve = 0;
+                    }
+                    i = -1;
+                }else{
+                    tableau_test[i] = message[posMessage];
+                }
+            }else{
+                message[posMessage]=buffer;
+            }
+        }
+        i++;
+        posMessage++;
+    }
+
+
     if(trouve==0) {
         message[posMessage - 1] = '\0';
         printf("%s\n",message);
@@ -89,18 +121,29 @@ int decryptMessage(int lecture, int decalage, char* mot_test){
 int main(int argc, char** argv){
 
     //vérification du nombre d'arguments
-    int lecture = atoi(argv[2]);
-    int ecriture = atoi(argv[1]);
-    int decalage = atoi(argv[4]);
+    if(argc != 5){
+        perror("le nombre d'arguments dans le programme de décalage n'est pas correcte\n");
+        exit(-1);
+    }
+
+    //distribution des arguments
+    int lecture = atoi(argv[1]);
+    int ecriture = atoi(argv[2]);
     char* mot_test = argv[3];
+    int decalage = atoi(argv[4]);
+
 
     close(ecriture);
 
     int trouve = decryptMessage(lecture, decalage, mot_test);
 
+    close(lecture);
+
     sleep(1);
+
     if(trouve==1){
         return 1;
     }
+
     return atoi(argv[4]);
 }

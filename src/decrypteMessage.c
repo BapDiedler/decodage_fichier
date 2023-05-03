@@ -19,7 +19,7 @@
  * @param mot mot à tester
  * @param decalage décalage dans le code
  */
-void creation_processus(int lecture,int ecriture, char* mot, char* decalage){
+void creation_processus(int lecture, int ecriture, char* mot, char* decalage){
     pid_t res;
     char valLecture[5], valEcriture[5];
     sprintf(valEcriture,"%d",ecriture);
@@ -30,7 +30,7 @@ void creation_processus(int lecture,int ecriture, char* mot, char* decalage){
             perror("erreur dans la créatiob de processus");
             exit(1);
         case (pid_t) 0 ://programme fils
-            execl("./decalageMessage","decalageMessage",valEcriture,valLecture,mot,decalage,NULL);
+            execl("./decalageMessage","decalageMessage",valLecture,valEcriture,mot,decalage,NULL);
             fflush(stdout);
             break;
         default ://programme père
@@ -47,6 +47,13 @@ void creation_processus(int lecture,int ecriture, char* mot, char* decalage){
  * @return descripteur de fichier
  */
 int ouverture_fichier(char* nom_fichier){
+
+    if (access(nom_fichier, F_OK) != 0) {
+        printf("Le fichier %s n'existe pas.\n", nom_fichier);
+        fflush(stdout);
+        exit(1);
+    }
+
     //ouverture du fichier
     int fp = open(nom_fichier,O_RDONLY);
     if (fp == -1) {
@@ -86,16 +93,17 @@ void test_donnees_fichier(int fp,int* bufferInt1, int* bufferInt2){
     int bufferInt[2];
     //test valeurs fichier
     if(read(fp,&bufferInt,2* sizeof(int))){
-        if(!(bufferInt[0]>=0 && bufferInt[0] < lseek(fp, 0, SEEK_END))){
+        if(!(bufferInt[0]>=0 && bufferInt[0] < lseek(fp, SEEK_SET, SEEK_END))){
             perror("la taille du fichier n'est pas correcte");
             exit(1);
-        }else{
+        }else{//sauvegarde de la valeur
             *bufferInt1 = bufferInt[0];
         }
-        if(!(bufferInt[1]>=0 && bufferInt[1] < lseek(fp, 0, SEEK_END) && bufferInt[0] > bufferInt[1])){
+        if(!(bufferInt[1]>=0 && bufferInt[1] < lseek(fp, SEEK_SET, SEEK_END)
+        && bufferInt[0]-2*sizeof(char) -2*sizeof(int) > bufferInt[1])){
             perror("les valeurs du fichier ne sont pas correctes");
             exit(1);
-        }else{
+        }else{//sauvegarde de la valeur
             *bufferInt2 = bufferInt[1];
         }
     }
@@ -136,31 +144,39 @@ int recuperation_donnees_fils(char * nom_fichier){
  * @param bufferInt buffer sur le descritif du fichier
  */
 void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
-    char cara;
-    char* message = malloc(sizeof(char)*(bufferInt[0]+1));
-    //lecture du message
+    char buffer;
+    ssize_t val;
+
+    //fermeture de la lecture
+    for (int j = 0; j < 25; j++) {
+        close(lecture[j]);
+    }
+
+    //déplacement de curseur dans le fichier
     lseek(fp, (__off_t) (bufferInt[1] + 2 * sizeof(int) + 2 * sizeof(char)), SEEK_SET);
 
+    //lecture du message
     for(int i=0;  i < bufferInt[0]+1; i++){
         if(i!=bufferInt[0]) {
-            if (!read(fp, &cara, sizeof(char))) {
-                perror("erreur dans la lecture du fichier");
+            val = read(fp, &buffer, sizeof(char));
+            if (val==-1) {
+                printf("erreur dans la lecture du fichier: %zd\n",val);
+                fflush(stdout);
                 exit(1);
             }
-            message[i] = cara;
         }else{
-            message[i] = '+';
+            buffer = 'A';
         }
         for (int j = 0; j < 25; j++) {
             /* écriture (buffer est une suite d'un ou plusieurs octets ici de taille char)*/
-            write(ecriture[j], &message[i], sizeof(message[i]));
+            write(ecriture[j], &buffer, sizeof(buffer));
         }
-
     }
+
+    //fermeture des tubes d'écriture
     for (int j = 0; j < 25; j++) {
         close(ecriture[j]);
     }
-    free(message);
 }
 
 
@@ -180,6 +196,7 @@ int main(int argc, char** argv){
         exit(1);
     }
 
+    //distribution des arguments et déclarations
     char* nom_fichier = argv[1];
     char* mot = argv[2];
     char decalage[3];//décalage du décryptage
@@ -201,8 +218,8 @@ int main(int argc, char** argv){
             fflush(stdout);
             exit(1);
         }
-        ecriture[i] = tube[i][1];
         lecture[i] = tube[i][0];
+        ecriture[i] = tube[i][1];
     }
 
     // création des processus
@@ -215,7 +232,7 @@ int main(int argc, char** argv){
 
     int trouve = recuperation_donnees_fils(nom_fichier);//récupération des données des processus fils
 
-    close(fp);
+    close(fp);//fermeture du fichier
 
     return trouve;
 }
