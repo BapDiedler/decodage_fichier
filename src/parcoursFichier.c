@@ -34,6 +34,43 @@ int lectureDonnees(int nbFichiers){
     return trouve;
 }
 
+/**
+ * fonction qui parcours le répertoire du chemin et appelle le décryptage des fichiers
+ *
+ * @param dir répertoire
+ * @param chemin chemin du répertoire
+ * @param mot mot à chercher
+ * @return le nombre de fichier
+ */
+int parcoursFichiers(DIR* dir, char* chemin, char* mot){
+    struct dirent * ent;
+    int nbFichiers=0;
+    char* fichier;
+    // Parcourt le répertoire
+    while ((ent = readdir(dir)) != NULL) {
+        if(ent->d_type != DT_DIR) {
+            nbFichiers++;
+            pid_t res;
+            fichier = strdup(chemin);
+            strcat(fichier,ent->d_name);
+            //création d'un processus
+            switch (res = fork()) {
+                case (pid_t) -1 ://erreur dans la création de processus
+                    perror("erreur dans la créatiob de processus");
+                    exit(1);
+                case (pid_t) 0 ://programme fils
+                    execl("./decrypteMessage","decrypteMessage",fichier,mot,NULL);
+                    fflush(stdout);
+                    break;
+                default ://programme père
+                    break;
+            }
+            free(fichier);//libération mémoire du strdup
+        }
+    }
+    return nbFichiers;
+}
+
 /*MAIN PROGRAMME*/
 int main(int argc, char** argv){
 
@@ -43,10 +80,6 @@ int main(int argc, char** argv){
         exit(1);
     }
 
-    struct dirent * ent;
-    char* fichier;
-    int nbFichiers=0;
-
     // Ouvre le répertoire courant
     DIR* dir = opendir(argv[1]);
     if (dir == NULL) {
@@ -54,28 +87,7 @@ int main(int argc, char** argv){
         exit(1);
     }
 
-    // Parcourt le répertoire
-    while ((ent = readdir(dir)) != NULL) {
-        if(ent->d_type != DT_DIR) {
-            nbFichiers++;
-            pid_t res;
-            fichier = strdup(argv[1]);
-            strcat(fichier,ent->d_name);
-            //création d'un processus
-            switch (res = fork()) {
-                case (pid_t) -1 ://erreur dans la création de processus
-                    perror("erreur dans la créatiob de processus");
-                    exit(1);
-                case (pid_t) 0 ://programme fils
-                    execl("./decrypteMessage","decrypteMessage",fichier,argv[2],NULL);
-                    fflush(stdout);
-                    break;
-                default ://programme père
-                    break;
-            }
-            free(fichier);//libération mémoire du strdup
-        }
-    }
+    int nbFichiers = parcoursFichiers(dir,argv[1],argv[2]);
 
     //on vérifie si le mot a été trouvé
     if(lectureDonnees(nbFichiers) == 1){
