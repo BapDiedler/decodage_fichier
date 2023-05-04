@@ -11,7 +11,7 @@
 #include <string.h>
 
 
-#define NBPROCESS 25
+#define NBPROCESS 26
 
 /**
  * méthode qui gère la création de processus
@@ -147,14 +147,9 @@ int recuperation_donnees_fils(char * nom_fichier){
  * @param fp fichier
  * @param bufferInt buffer sur le descritif du fichier
  */
-void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
+void lecture_message(int* ecriture, int fp, int* bufferInt){
     char buffer;
     ssize_t val;
-
-    //fermeture de la lecture
-    for (int j = 0; j < NBPROCESS; j++) {
-        //close(lecture[j]);
-    }
 
     //déplacement de curseur dans le fichier
     lseek(fp, (__off_t) (bufferInt[1] + 2 * sizeof(int) + 2 * sizeof(char)), SEEK_SET);
@@ -172,11 +167,6 @@ void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
             write(ecriture[j], &buffer, sizeof(buffer));
         }
     }
-
-    //fermeture des tubes d'écriture
-    for (int j = 0; j < NBPROCESS; j++) {
-        close(ecriture[j]);
-    }
 }
 
 
@@ -186,7 +176,7 @@ void lecture_message(int* lecture, int* ecriture, int fp, int* bufferInt){
  * @param argc nombre d'arguments
  * @param argv les arguments argv[1] nom_fichier | argv[2] mot_test | argv[3] décalage
  *
- * @return 1 si tout c'est bien passé ou -1 en cas d'erreur
+ * @return 1 si tout c'est bien passé ou -1 en cas d'erreur ou 0 si les processus fils on trouvés le mot
  */
 int main(int argc, char** argv){
 
@@ -228,7 +218,12 @@ int main(int argc, char** argv){
         creation_processus(lecture[i],ecriture[i],mot,decalage, ecriture);
     }
 
-    lecture_message(lecture,ecriture,fp,bufferInt);//lecture des messages cryptés
+    lecture_message(ecriture,fp,bufferInt);//lecture des messages cryptés
+
+    //fermeture des tubes d'écriture
+    for (int j = 0; j < NBPROCESS; j++) {
+        close(ecriture[j]);
+    }
 
     int trouve = recuperation_donnees_fils(nom_fichier);//récupération des données des processus fils
 

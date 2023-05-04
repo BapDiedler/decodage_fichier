@@ -48,7 +48,7 @@ int parcoursFichiers(DIR* dir, char* chemin, char* mot){
     char* fichier;
     // Parcourt le répertoire
     while ((ent = readdir(dir)) != NULL) {
-        if(ent->d_type != DT_DIR) {
+        if(ent->d_type == 8) {
             nbFichiers++;
             pid_t res;
             fichier = strdup(chemin);

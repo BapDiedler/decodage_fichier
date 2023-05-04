@@ -44,65 +44,28 @@ int decryptMessage(int lecture, int decalage, char* mot_test){
     int i=0;
     int trouve = 1;
     int posMessage=0;
-    int val;
 
     //lecture des valeurs du tubes avec décalage des valeurs
-    /**do{
-        val = read(lecture,&buffer, sizeof(char));
-        if(decalage != 0 && buffer != '+') {
-            // Chercher l'index du caractère dans l'alphabet
-            int index = chercheIndex(buffer);
-
-            // Si le caractère est dans l'alphabet, le déchiffrer
-            if (index != -1) {
-                //trouve = dechiffrement(message,tableau_test,mot_test,posMessage,decalage,index,i);
-                index = (index - decalage + 27) % 27;
-                message[posMessage] = alphabet[index];
-                if (index == 26) {
-                    tableau_test[i] = '\0';
-                    if (strcmp(tableau_test, mot_test) == 0) {
-                        trouve = 0;
-                    }
-                    i = -1;
-                }else{
-                    tableau_test[i] = message[posMessage];
-                }
-            }else{
-                message[posMessage]=buffer;
-            }
-        }
-
-        if(buffer == '+'){
-            close(lecture);
-            val = 0;
-        }
-        i++;
-        posMessage++;
-    } while (val != 0 && val != -1);*/
-
-
     while(read(lecture,&buffer, sizeof(char)) != 0){
-        if(decalage != 0) {
-            // Chercher l'index du caractère dans l'alphabet
-            int index = chercheIndex(buffer);
+        // Chercher l'index du caractère dans l'alphabet
+        int index = chercheIndex(buffer);
 
-            // Si le caractère est dans l'alphabet, le déchiffrer
-            if (index != -1) {
-                index = (index - decalage + 27) % 27;
-                message[posMessage] = alphabet[index];
-                if (index == 26) {
-                    tableau_test[i] = '\0';
-                    //on regarde si le mot est trouvé
-                    if (strcmp(tableau_test, mot_test) == 0) {
-                        trouve = 0;
-                    }
-                    i = -1;
-                }else{
-                    tableau_test[i] = message[posMessage];
+        // Si le caractère est dans l'alphabet, le déchiffrer
+        if (index != -1) {
+            index = (index - decalage + 27) % 27;
+            message[posMessage] = alphabet[index];
+            if (index == 26) {
+                tableau_test[i] = '\0';
+                //on regarde si le mot est trouvé
+                if (strcmp(tableau_test, mot_test) == 0) {
+                    trouve = 0;
                 }
+                i = -1;
             }else{
-                message[posMessage]=buffer;
+                tableau_test[i] = message[posMessage];
             }
+        }else{
+            message[posMessage]=buffer;
         }
         i++;
         posMessage++;
