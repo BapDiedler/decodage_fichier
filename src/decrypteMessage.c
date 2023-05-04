@@ -35,7 +35,7 @@ void creation_processus(int lecture, int ecriture, char* mot, char* decalage, in
             for(int i = 0 ; i < NBPROCESS ; i += 1) {
                 close(ecritures[i]);
             }
-            execl("./decalageMessage","decalageMessage",valLecture,valEcriture,mot,decalage,NULL);
+            execl("./decalageMessage","decalageMessage",valLecture,mot,decalage,NULL);
             break;
         default ://programme père
             break;
@@ -126,7 +126,7 @@ int recuperation_donnees_fils(char * nom_fichier){
     for(int i=0; i<NBPROCESS; i++) {
         wait(&status); // Attendre la fin de l'exécution du processus fils
         if (WIFEXITED(status)) {
-            if (WEXITSTATUS(status) != 1) {
+            if (WEXITSTATUS(status) != 0) {
                 printf("FICHIER : %s\n", nom_fichier);
                 fflush(stdout);
                 printf("DECALAGE : %d\n", WEXITSTATUS(status));
@@ -214,7 +214,7 @@ int main(int argc, char** argv){
 
     // création des processus
     for(int i=0; i<NBPROCESS; i++){
-        sprintf(decalage,"%d",i);
+        sprintf(decalage,"%d",i+1);
         creation_processus(lecture[i],ecriture[i],mot,decalage, ecriture);
     }
 

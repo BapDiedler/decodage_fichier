@@ -84,27 +84,23 @@ int decryptMessage(int lecture, int decalage, char* mot_test){
 int main(int argc, char** argv){
 
     //vérification du nombre d'arguments
-    if(argc != 5){
+    if(argc != 4){
         perror("le nombre d'arguments dans le programme de décalage n'est pas correcte\n");
         exit(-1);
     }
 
     //distribution des arguments
     int lecture = atoi(argv[1]);
-    int ecriture = atoi(argv[2]);
-    char* mot_test = argv[3];
-    int decalage = atoi(argv[4]);
-
-
-    close(ecriture);
+    char* mot_test = argv[2];
+    int decalage = atoi(argv[3]);
 
     int trouve = decryptMessage(lecture, decalage, mot_test);
 
     close(lecture);
 
     if(trouve==1){
-        return 1;
+        return 0;
     }
 
-    return atoi(argv[4]);
+    return decalage;
 }

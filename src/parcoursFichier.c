@@ -60,7 +60,6 @@ int parcoursFichiers(DIR* dir, char* chemin, char* mot){
                     exit(1);
                 case (pid_t) 0 ://programme fils
                     execl("./decrypteMessage","decrypteMessage",fichier,mot,NULL);
-                    fflush(stdout);
                     break;
                 default ://programme père
                     break;
