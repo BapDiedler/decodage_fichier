@@ -46,11 +46,11 @@ int parcoursFichiers(DIR* dir, char* chemin, char* mot){
     struct dirent * ent;
     int nbFichiers=0;
     char* fichier;
+    pid_t res;
     // Parcourt le répertoire
     while ((ent = readdir(dir)) != NULL) {
         if(ent->d_type == 8) {
             nbFichiers++;
-            pid_t res;
             fichier = strdup(chemin);
             strcat(fichier,ent->d_name);
             //création d'un processus
@@ -64,7 +64,8 @@ int parcoursFichiers(DIR* dir, char* chemin, char* mot){
                 default ://programme père
                     break;
             }
-            free(fichier);//libération mémoire du strdup
+            if(!fichier)
+                free(fichier);//libération mémoire du strdup
         }
     }
     return nbFichiers;

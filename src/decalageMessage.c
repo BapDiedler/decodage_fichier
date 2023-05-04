@@ -17,11 +17,9 @@ int chercheIndex(char buffer){
     char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
     char* valIndex;
     int index = -1;
-    if(buffer != '.' && buffer != ',') {//ces caractères ne changent pas
-        valIndex = strchr(alphabet,buffer);
-        if(valIndex != NULL){//si le caractère est dans notre alphabet
-            index = valIndex - alphabet;
-        }
+    valIndex = strchr(alphabet,buffer);
+    if(valIndex != NULL){//si le caractère est dans notre alphabet
+        index = valIndex - alphabet;
     }
     return index;
 }
@@ -44,15 +42,17 @@ int decryptMessage(int lecture, int decalage, char* mot_test){
     int i=0;
     int trouve = 1;
     int posMessage=0;
+    int valRead = 1;
 
     //lecture des valeurs du tubes avec décalage des valeurs
-    while(read(lecture,&buffer, sizeof(char)) != 0){
+    while((valRead = read(lecture,&buffer, sizeof(char))) != 0 && valRead != -1){
+
         // Chercher l'index du caractère dans l'alphabet
         int index = chercheIndex(buffer);
 
         // Si le caractère est dans l'alphabet, le déchiffrer
         if (index != -1) {
-            index = (index - decalage + 27) % 27;
+            index = (index - decalage + 27) % 27;//décalage
             message[posMessage] = alphabet[index];
             if (index == 26) {
                 tableau_test[i] = '\0';

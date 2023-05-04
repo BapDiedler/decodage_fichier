@@ -1,0 +1,35 @@
+
+
+Les trois programmes permettent de décrypter un message et de trouver le mot voulut, le fichier correspondant
+ainsi que le décalage utlisé.
+
+programme :
+    parcoursFichier.c : ( ./parcoursFichiers src/ressource/TestEtMessagesCodes/MessagesCodes/ MOUTARDE )
+        arguments :  chemin du répertoire à parcourir ( src/ressource/TestEtMessagesCodes/MessagesCodes/ )
+                     nom de personne à chercher ou mot à chercher ( MOUTARDE )
+
+        return : 0 si tout c'est bien passé, 1 sinon
+
+        le programme va parcourir tous les fichiers du répertoire demandé pour lancer
+        le décryptage à l'aide du programme decrypteMessage.c
+
+
+    decrypteMessage.c : ( ./decrypteMessage src/ressource/TestEtMessagesCodes/MessagesCodes/1.cod MOUTARDE )
+            arguments :  chemin du fichier ( src/ressource/TestEtMessagesCodes/MessagesCodes/1.cod )
+                         nom de personne à chercher ou mot à chercher ( MOUTARDE )
+
+            return : 0 si tout c'est bien passé, 1 sinon
+
+            le programme créer des processus pour pouvoir décaler le contenu du fichier souhaiter.
+
+
+    decalageMessage.c : ( ./decalalgeMessage lecture MOUTARDE 10)
+                arguments :  descripteur de lecture du pipe ( lecture )
+                             nom de personne à chercher ou mot à chercher ( MOUTARDE )
+                             décalage à effectuer ( 10 )
+
+
+                return : le décalage si tout c'est bien passé, 0 sinon
+
+                le programme permet de décaler les lettres du tube pour déchiffrer le message.
+                Et cherche le mot cherché dans le message décrypté.
